@@ -135,7 +135,7 @@ async def auth(req: Request, db: AsyncSession = Depends(get_db)):
             res.set_cookie(key='refreshToken', value=refresh_token,httponly=True,expires=86400, max_age=86400)
             return res
         if existing_user and existing_user.provider != provider :
-            res = RedirectResponse(url=f'{setting.DOMAIN}?oauth_error=Email already in use with another provider')
+            res = RedirectResponse(url=f'{setting.DOMAIN}/auth/login?oauth_error=Email already in use with another provider')
             return res
         user =  await UsersService.create_user_oauth(user_data,db)
         access_token = utils.create_access_token(user.id)
@@ -189,7 +189,7 @@ async def github_auth(code:str, db:AsyncSession = Depends(get_db)):
         res.set_cookie(key='refreshToken', value=refresh_token,httponly=True,expires=86400, max_age=86400)
         return res
     if existing_user and existing_user.provider != provider :
-        res = RedirectResponse(url=f'{setting.DOMAIN}?oauth_error=Email already in use with another provider')
+        res = RedirectResponse(url=f'{setting.DOMAIN}/auth/login?oauth_error=Email already in use with another provider')
         return res
     user =  await UsersService.create_user_oauth(user_data,db)
     access_token = utils.create_access_token(user.id)
