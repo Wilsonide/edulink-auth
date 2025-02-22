@@ -18,7 +18,7 @@ class UserOut(BaseModel):
     role:str
     image: str
     id: int
-    access_token: str| None = None
+    accessToken: str| None = None
 
     class Config:
         orm_mode = True
@@ -29,7 +29,7 @@ class UserOut(BaseModel):
 class User_create(BaseModel):
     email: EmailStr
     password: str| None = None
-    name: str
+    name: str| None = None
     image: str| None = None
     provider: Optional[str] = None
     emailVerified: Optional[bool] = None

@@ -26,6 +26,11 @@ async def create_user(user:schemas.User_create, bg:BackgroundTasks, db:AsyncSess
     bg.add_task(utils.sendMail,user.email,subject="Email Verification",body=body)
     return new_user
 
+@router.get("/logout")
+async def logout(user = Depends(utils.authenticate), db:AsyncSession = Depends(get_db)):
+    await UsersService.update_user({"refresh_token": ""},db,user.email)
+    return 
+
 @router.post("/login", response_model=schemas.UserOut)
 async def login(credentials: schemas.User_create, response:Response, db:AsyncSession = Depends(get_db)):
     user = await UsersService.get_user(db,credentials.email)
@@ -45,12 +50,12 @@ async def login(credentials: schemas.User_create, response:Response, db:AsyncSes
     refresh_token = utils.create_refresh_token(user.id)
     user.refresh_token = refresh_token
     await db.commit()
-    response.set_cookie(key='refresh_token', value=refresh_token,httponly=True,expires=86400, max_age=86400)
-    return {**user.__dict__, 'access_token': access_token}
+    response.set_cookie(key='refreshToken', value=refresh_token,httponly=True,expires=86400, max_age=86400)
+    return {**user.__dict__, 'accessToken': access_token}
 
 @router.get('/refresh',response_model=schemas.UserOut)
 async def refresh(req:Request, db:AsyncSession = Depends(get_db)):
-    token = req.cookies.get("refresh_token")
+    token = req.cookies.get("refreshToken")
     if not token:
         raise HTTPException(
             detail="No refresh token found",
@@ -63,8 +68,8 @@ async def refresh(req:Request, db:AsyncSession = Depends(get_db)):
             status_code=status.HTTP_403_FORBIDDEN,
         )
     userId = await utils.verify_token(token)
-    access_token = await utils.create_access_token(userId)
-    return {**user.__dict__, 'access_token': access_token}
+    access_token = utils.create_access_token(userId)
+    return {**user.__dict__, 'accessToken': access_token}
 
 @router.get('/verification')
 async def verify_email(token:str, db:AsyncSession = Depends(get_db)):
@@ -127,7 +132,7 @@ async def auth(req: Request, db: AsyncSession = Depends(get_db)):
             refresh_token = utils.create_refresh_token(existing_user.id)
             await UsersService.update_user({"refresh_token": refresh_token},db,existing_user.email)
             res = RedirectResponse(url=setting.DOMAIN)
-            res.set_cookie(key='refresh_token', value=refresh_token,httponly=True,expires=86400, max_age=86400)
+            res.set_cookie(key='refreshToken', value=refresh_token,httponly=True,expires=86400, max_age=86400)
             return res
         if existing_user and existing_user.provider != provider :
             res = RedirectResponse(url=f'{setting.DOMAIN}?oauth_error=Email already in use with another provider')
@@ -137,7 +142,7 @@ async def auth(req: Request, db: AsyncSession = Depends(get_db)):
         refresh_token = utils.create_refresh_token(user.id)
         await UsersService.update_user({"refresh_token": refresh_token},db,user.email)
         res = RedirectResponse(url=setting.DOMAIN)
-        res.set_cookie(key='refresh_token', value=refresh_token,httponly=True,expires=86400, max_age=86400)
+        res.set_cookie(key='refreshToken', value=refresh_token,httponly=True,expires=86400, max_age=86400)
         return res
         
     except OAuthError :
@@ -181,7 +186,7 @@ async def github_auth(code:str, db:AsyncSession = Depends(get_db)):
         refresh_token = utils.create_refresh_token(existing_user.id)
         await UsersService.update_user({"refresh_token": refresh_token},db,existing_user.email)
         res = RedirectResponse(url=setting.DOMAIN)
-        res.set_cookie(key='refresh_token', value=refresh_token,httponly=True,expires=86400, max_age=86400)
+        res.set_cookie(key='refreshToken', value=refresh_token,httponly=True,expires=86400, max_age=86400)
         return res
     if existing_user and existing_user.provider != provider :
         res = RedirectResponse(url=f'{setting.DOMAIN}?oauth_error=Email already in use with another provider')
@@ -191,5 +196,5 @@ async def github_auth(code:str, db:AsyncSession = Depends(get_db)):
     refresh_token = utils.create_refresh_token(user.id)
     await UsersService.update_user({"refresh_token": refresh_token},db,user.email)
     res = RedirectResponse(url=setting.DOMAIN)
-    res.set_cookie(key='refresh_token', value=refresh_token,httponly=True,expires=86400, max_age=86400)
+    res.set_cookie(key='refreshToken', value=refresh_token,httponly=True,expires=86400, max_age=86400)
     return res

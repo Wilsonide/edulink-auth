@@ -16,6 +16,6 @@ class User(Base):
     emailVerified: Mapped[bool] = mapped_column(Boolean,server_default='f')
     refresh_token: Mapped[str] = mapped_column(String,server_default='')
     image: Mapped[str] = mapped_column(String, server_default='')
-    role: Mapped[str] = mapped_column(String, server_default=text('USER'))
+    role: Mapped[str] = mapped_column(String, server_default='USER')
     is_two_factor_enabled :Mapped[bool] = mapped_column(Boolean,server_default='f')
     created_at:Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True),server_default=text('now()'),nullable=False)
